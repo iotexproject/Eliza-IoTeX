@@ -1,23 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { DepinDataProvider } from "../providers/depinData";
-
-const METRICS_OBJECT = [
-    {
-        date: "2024-12-17",
-        total_projects: "291",
-        market_cap: "36046044620.57570635160",
-        total_device: "19416950",
-    },
-];
+import {
+    DEPIN_METRICS_URL,
+    DEPIN_PROJECTS_URL,
+    DepinDataProvider,
+} from "../providers/depinData";
+import { mockDepinscanMetrics, mockDepinscanProjects } from "./mockData";
 
 vi.stubGlobal(
     "fetch",
-    vi.fn(() =>
-        Promise.resolve({
-            json: () => Promise.resolve(METRICS_OBJECT),
-        })
-    )
+    vi.fn((url) => {
+        if (url.includes(DEPIN_METRICS_URL)) {
+            return Promise.resolve({
+                json: () => Promise.resolve(mockDepinscanMetrics),
+            });
+        } else if (url.includes(DEPIN_PROJECTS_URL)) {
+            return Promise.resolve({
+                json: () => Promise.resolve(mockDepinscanProjects),
+            });
+        } else {
+            return Promise.reject(new Error("Unknown endpoint"));
+        }
+    })
 );
 
 describe("Depin Data provider", () => {
@@ -26,9 +30,14 @@ describe("Depin Data provider", () => {
 
         expect(ddp).toBeDefined();
     });
-    it("should fetch depin metrics", async () => {
+    it("should fetch depinscan metrics", async () => {
         const metrics = await DepinDataProvider.fetchDepinscanMetrics();
 
-        expect(metrics).toEqual(METRICS_OBJECT);
+        expect(metrics).toEqual(mockDepinscanMetrics);
+    });
+    it("should fetch depinscan projects", async () => {
+        const projects = await DepinDataProvider.fetchDepinscanProjects();
+
+        expect(projects).toEqual(mockDepinscanProjects);
     });
 });
