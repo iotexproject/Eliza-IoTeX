@@ -6,7 +6,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 import { DepinDataProvider } from "../providers/depinData";
 import { DepinScanMetrics, DepinScanProject } from "../types/depin";

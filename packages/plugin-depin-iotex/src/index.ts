@@ -1,4 +1,4 @@
-import type { Plugin } from "@ai16z/eliza";
+import type { Plugin } from "@elizaos/core";
 
 import { depinDataProvider } from "./providers/depinData";
 import { fetchDepinscanDataAction } from "./actions/fetchDepinscanData";

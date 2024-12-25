@@ -1,4 +1,3 @@
-import { elizaLogger } from "@elizaos/core";
 import {
     Action,
     HandlerCallback,
@@ -8,8 +7,9 @@ import {
     State,
     generateText,
     ModelClass,
+    generateImage,
+    elizaLogger
 } from "@elizaos/core";
-import { generateImage } from "@ai16z/eliza";
 
 import fs from "fs";
 import path from "path";
