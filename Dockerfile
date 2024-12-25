@@ -43,7 +43,7 @@ COPY packages ./packages
 COPY scripts ./scripts
 
 # Install dependencies
-RUN pnpm install
+RUN pnpm install --no-frozen-lockfile
 
 # Install Playwright Browsers
 RUN pnpm exec playwright install

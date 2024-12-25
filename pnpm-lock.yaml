@@ -135,6 +135,9 @@ importers:
       '@elizaos/plugin-bootstrap':
         specifier: workspace:*
         version: link:../packages/plugin-bootstrap
+      '@elizaos/plugin-depin-iotex':
+        specifier: workspace:*
+        version: link:../packages/plugin-depin-iotex
       '@elizaos/plugin-evm':
         specifier: workspace:*
         version: link:../packages/plugin-evm
@@ -159,6 +162,9 @@ importers:
       '@elizaos/plugin-tee':
         specifier: workspace:*
         version: link:../packages/plugin-tee
+      '@elizaos/plugin-web-search':
+        specifier: workspace:*
+        version: link:../packages/plugin-web-search
       readline:
         specifier: 1.3.0
         version: 1.3.0
