@@ -84,7 +84,7 @@ describe("Depin Data provider", () => {
 
         expect(metrics).toEqual(mockDepinscanMetrics);
     });
-    it.only("should fetch depinscan projects", async () => {
+    it("should fetch depinscan projects", async () => {
         const projects = await depinscan.getProjects();
 
         expect(projects).toEqual(parsedProjectsSample);

@@ -1,7 +1,7 @@
 import type { Plugin } from "@elizaos/core";
 
 import { depinDataProvider } from "./providers/depinData";
-import { fetchDepinscanDataAction } from "./actions/fetchDepinscanData";
+import { depinProjects } from "./actions/depinProjects";
 
 export const depinPlugin: Plugin = {
     name: "depin",
@@ -9,7 +9,7 @@ export const depinPlugin: Plugin = {
     providers: [depinDataProvider],
     evaluators: [],
     services: [],
-    actions: [fetchDepinscanDataAction],
+    actions: [depinProjects],
 };
 
 export default depinPlugin;
