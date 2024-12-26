@@ -91,7 +91,7 @@ export const bridgeAction = {
         const privateKey = runtime.getSetting(
             "EVM_PRIVATE_KEY"
         ) as `0x${string}`;
-        const walletProvider = new WalletProvider(privateKey);
+        const walletProvider = new WalletProvider(runtime.cacheManager, privateKey);
         const action = new BridgeAction(walletProvider);
         return action.bridge(options);
     },
