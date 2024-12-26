@@ -199,22 +199,15 @@ export const depinDataProvider: Provider = {
     ): Promise<string | null> {
         try {
             const depinscan = new DePINScanProvider(runtime.cacheManager);
-            console.log("depinscan ready")
             const depinscanMetrics = await depinscan.getDailyMetrics();
-            console.log("metrics ready: ", depinscanMetrics)
             const depinscanProjects = await depinscan.getProjects();
-            console.log("projects ready: ", depinscanProjects)
 
-            const res = `
+            return `
                 #### **DePINScan Daily Metrics**
                 ${depinscanMetrics}
                 #### **DePINScan Projects**
                 ${depinscanProjects}
             `;
-
-            console.log("here is the res: ", res);
-
-            return res;
         } catch (error) {
             elizaLogger.error("Error in DePIN data provider:", error);
             return null;
