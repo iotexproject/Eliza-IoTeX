@@ -8,7 +8,7 @@ import {
     type State,
 } from "@elizaos/core";
 
-import { DepinDataProvider } from "../providers/depinData";
+import { DePINScanProvider } from "../providers/depinData";
 import { DepinScanMetrics, DepinScanProject } from "../types/depin";
 
 export const fetchDepinscanDataAction = {
@@ -24,8 +24,9 @@ export const fetchDepinscanDataAction = {
         elizaLogger.log("Fetch DePINScan action handler called");
 
         try {
-            const metrics = await DepinDataProvider.fetchDepinscanMetrics();
-            const projects = await DepinDataProvider.fetchDepinscanProjects();
+            const depinscan = new DePINScanProvider(runtime.cacheManager);
+            const metrics = await depinscan.getDailyMetrics();
+            const projects = await depinscan.getProjects();
 
             const response = await generateText({
                 runtime,
@@ -150,7 +151,7 @@ export const fetchDepinscanDataAction = {
 const depinAnalysisTemplate = (
     state: State,
     metrics: DepinScanMetrics,
-    projects: DepinScanProject
+    projects: string[][]
 ) =>
     `
 ### 📊 DePIN Analysis Request

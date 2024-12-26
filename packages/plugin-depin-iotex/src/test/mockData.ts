@@ -51,3 +51,54 @@ export const mockDepinscanProjects = [
         fully_diluted_valuation: "4705509105",
     },
 ];
+
+export const parsedProjectsSample = [
+    [
+        "project_name",
+        "slug",
+        "token",
+        "layer_1",
+        "categories",
+        "market_cap",
+        "token_price",
+        "total_devices",
+        "avg_device_cost",
+        "days_to_breakeven",
+        "estimated_daily_earnings",
+        "chainid",
+        "coingecko_id",
+        "fully_diluted_valuation",
+    ],
+    [
+        "Solana",
+        "solana",
+        "SOL",
+        "Solana",
+        "Chain",
+        "106.25B",
+        "221.91",
+        "0",
+        "",
+        "",
+        "",
+        "",
+        "solana",
+        "131.51B"
+    ],
+    [
+        "Render",
+        "render",
+        "RNDR",
+        "Solana",
+        "Server, AI",
+        "4.66B",
+        "9.02",
+        "0",
+        "",
+        "",
+        "",
+        "1",
+        "render-token",
+        "4.71B"
+    ]
+]
