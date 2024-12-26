@@ -206,8 +206,6 @@ export const depinProjects: Action = {
             template: projectsTemplate
         })
 
-        console.log(projectsContext);
-
         const response = await generateMessageResponse({
             runtime,
             context: projectsContext,
