@@ -144,12 +144,14 @@ export const goalEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         // Check if there are active goals that could potentially be updated
+        console.time("update-goal-evaluate")
         const goals = await getGoals({
             runtime,
             count: 1,
             onlyInProgress: true,
             roomId: message.roomId,
         });
+        console.timeEnd("update-goal-evaluate")
         return goals.length > 0;
     },
     description:

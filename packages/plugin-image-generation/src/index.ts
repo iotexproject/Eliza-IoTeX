@@ -80,7 +80,9 @@ const imageGeneration: Action = {
     ],
     description: "Generate an image to go along with the message.",
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
+        console.time("generate-image-action")
         await validateImageGenConfig(runtime);
+        console.timeEnd("generate-image-action")
 
         const anthropicApiKeyOk = !!runtime.getSetting("ANTHROPIC_API_KEY");
         const togetherApiKeyOk = !!runtime.getSetting("TOGETHER_API_KEY");

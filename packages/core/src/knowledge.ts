@@ -32,11 +32,8 @@ async function get(
         return [];
     }
 
-    console.time("embedding")
     const embedding = await embed(runtime, processed);
-    console.timeEnd("embedding")
 
-    console.time("fragments")
     const fragments = await runtime.knowledgeManager.searchMemoriesByEmbedding(
         embedding,
         {
@@ -45,7 +42,6 @@ async function get(
             match_threshold: 0.1,
         }
     );
-    console.timeEnd("fragments")
 
     const uniqueSources = [
         ...new Set(
@@ -58,13 +54,11 @@ async function get(
         ),
     ];
 
-    console.time("knowledgeDocs")
     const knowledgeDocuments = await Promise.all(
         uniqueSources.map((source) =>
             runtime.documentsManager.getMemoryById(source as UUID)
         )
     );
-    console.timeEnd("knowledgeDocs")
 
     return knowledgeDocuments
         .filter((memory) => memory !== null)
