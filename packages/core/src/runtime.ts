@@ -923,19 +923,14 @@ Text: ${attachment.text}
             // Check the existing memories in the database
             console.time("existing-memories");
             console.timeLog("existing-memories", rooms.filter((room) => room !== roomId));
-            const existingMemories =
+            const recentInteractionsData =
             await this.messageManager.getMemoriesByRoomIds({
                 // filter out the current room id from rooms
                 roomIds: rooms.filter((room) => room !== roomId),
+                limit: 20
             });
-            console.timeLog("existing-memories", existingMemories.length);
+            console.timeLog("existing-memories", recentInteractionsData.length);
             console.timeEnd("existing-memories");
-
-            // Sort messages by timestamp in descending order
-            existingMemories.sort((a, b) => b.createdAt - a.createdAt);
-
-            // Take the most recent messages
-            const recentInteractionsData = existingMemories.slice(0, 20);
             return recentInteractionsData;
         };
 
