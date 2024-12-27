@@ -44,57 +44,6 @@ export function createApiRouter(
         res.json({ agents: agentsList });
     });
 
-    router.get("/agents/:agentId", (req, res) => {
-        const agentId = req.params.agentId;
-        const agent = agents.get(agentId);
-
-        if (!agent) {
-            res.status(404).json({ error: "Agent not found" });
-            return;
-        }
-
-        res.json({
-            id: agent.agentId,
-            character: agent.character,
-        });
-    });
-
-    router.post("/agents/:agentId/set", async (req, res) => {
-        const agentId = req.params.agentId;
-        console.log("agentId", agentId);
-        let agent: AgentRuntime = agents.get(agentId);
-
-        // update character
-        if (agent) {
-            // stop agent
-            agent.stop();
-            directClient.unregisterAgent(agent);
-            // if it has a different name, the agentId will change
-        }
-
-        // load character from body
-        const character = req.body;
-        try {
-            validateCharacterConfig(character);
-        } catch (e) {
-            elizaLogger.error(`Error parsing character: ${e}`);
-            res.status(400).json({
-                success: false,
-                message: e.message,
-            });
-            return;
-        }
-
-        // start it up (and register it)
-        agent = await directClient.startAgent(character);
-        elizaLogger.log(`${character.name} started`);
-
-        res.json({
-            id: character.id,
-            character: character,
-        });
-    });
-
     router.get("/agents/:agentId/channels", async (req, res) => {
         const agentId = req.params.agentId;
         const runtime = agents.get(agentId);
