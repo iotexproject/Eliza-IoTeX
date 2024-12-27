@@ -1150,38 +1150,21 @@ Text: ${attachment.text}
             ...additionalKeys,
         } as State;
 
-        console.time("action-validations")
-        const actionPromises = this.actions.map(async (action: Action) => {
-            const result = await action.validate(this, message, initialState);
-            if (result) {
-                return action;
-            }
-            return null;
-        });
-        console.timeEnd("action-validations")
-
-        console.time("evaluation-validations")
-        const evaluatorPromises = this.evaluators.map(async (evaluator) => {
-            const result = await evaluator.validate(
-                this,
-                message,
-                initialState
-            );
-            if (result) {
-                return evaluator;
-            }
-            return null;
-        });
-        console.timeEnd("evaluation-validations")
-
-        console.time("actionevaluators-resolution")
-        const [resolvedEvaluators, resolvedActions, providers] =
-        await Promise.all([
-            Promise.all(evaluatorPromises),
-            Promise.all(actionPromises),
+        console.time("total-validations");
+        const [resolvedEvaluators, resolvedActions, providers] = await Promise.all([
+            Promise.all(
+                this.evaluators.map(async (evaluator) => {
+                    return (await evaluator.validate(this, message, initialState)) ? evaluator : null;
+                })
+            ).then(results => results.filter(Boolean)),
+            Promise.all(
+                this.actions.map(async (action: Action) => {
+                    return (await action.validate(this, message, initialState)) ? action : null;
+                })
+            ).then(results => results.filter(Boolean)),
             getProviders(this, message, initialState),
         ]);
-        console.timeEnd("actionevaluators-resolution")
+        console.timeEnd("total-validations");
 
         const evaluatorsData = resolvedEvaluators.filter(
             Boolean
