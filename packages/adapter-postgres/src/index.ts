@@ -309,8 +309,6 @@ export class PostgresDatabaseAdapter
                 queryParams.push(params.limit.toString());
             }
 
-            console.log(query, queryParams);
-
             const { rows } = await this.pool.query(query, queryParams);
             return rows.map((row) => ({
                 ...row,
