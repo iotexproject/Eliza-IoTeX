@@ -921,7 +921,6 @@ Text: ${attachment.text}
             ]);
 
             // Check the existing memories in the database
-            console.time("existing-memories");
             console.timeLog("existing-memories", rooms.filter((room) => room !== roomId));
             const recentInteractionsData =
             await this.messageManager.getMemoriesByRoomIds({
@@ -930,16 +929,13 @@ Text: ${attachment.text}
                 limit: 20
             });
             console.timeLog("existing-memories", recentInteractionsData.length);
-            console.timeEnd("existing-memories");
             return recentInteractionsData;
         };
 
-        console.time("get-recent=interactions")
         const recentInteractions =
         userId !== this.agentId
         ? await getRecentInteractions(userId, this.agentId)
         : [];
-        console.timeEnd("get-recent=interactions")
 
         const getRecentMessageInteractions = async (
             recentInteractionsData: Memory[]
@@ -965,10 +961,8 @@ Text: ${attachment.text}
             return formattedInteractions.join("\n");
         };
 
-        console.time("getrecent-message-interactoins")
         const formattedMessageInteractions =
         await getRecentMessageInteractions(recentInteractions);
-        console.timeEnd("getrecent-message-interactoins")
 
         const getRecentPostInteractions = async (
             recentInteractionsData: Memory[],
@@ -983,12 +977,10 @@ Text: ${attachment.text}
             return formattedInteractions;
         };
 
-        console.time('getrecent-post-interactions')
         const formattedPostInteractions = await getRecentPostInteractions(
             recentInteractions,
             actorsData
         );
-        console.timeEnd('getrecent-post-interactions')
 
         // if bio is a string, use it. if its an array, pick one at random
         let bio = this.character.bio || "";
@@ -1000,9 +992,7 @@ Text: ${attachment.text}
                 .join(" ");
         }
 
-        console.time('knowledge-get')
         const knowledegeData = await knowledge.get(this, message);
-        console.timeEnd('knowledge-get')
 
         const formattedKnowledge = formatKnowledge(knowledegeData);
 
