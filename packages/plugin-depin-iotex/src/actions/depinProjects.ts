@@ -2,7 +2,7 @@ import { Action, composeContext, generateMessageResponse, generateText, HandlerC
 
 export const depinProjects: Action = {
     name: "DEPIN_PROJECTS",
-    similes: [],
+    similes: ["DEPIN_TOKENS"],
     description: "Fetches and compares DePIN project token prices",
     validate: async (_runtime: IAgentRuntime) => {
         return true;
@@ -34,6 +34,7 @@ export const depinProjects: Action = {
                 user: "assistant",
                 content: {
                     text: "Helium (HNT) is priced at $3.21, which is lower than Render (RNDR) at $9.02.",
+                    action: "DEPIN_TOKENS",
                 },
             },
         ],
@@ -206,17 +207,31 @@ export const depinProjects: Action = {
             template: projectsTemplate
         })
 
-        const response = await generateMessageResponse({
-            runtime,
-            context: projectsContext,
-            modelClass: ModelClass.LARGE,
-        })
+        try {
+            const text = await generateText({
+                runtime,
+                context: projectsContext,
+                modelClass: ModelClass.LARGE,
+            })
 
-        response.inReplyTo = message.id;
+            if (callback) {
+                callback({
+                    text,
+                    inReplyTo: message.id
+                })
+            }
 
-        await callback(response)
-
-        return true;
+            return true;
+        } catch (error) {
+            console.error("Error in depin project plugin:", error);
+            if (callback) {
+                callback({
+                    text: `Error processing request, try again`,
+                    content: { error: error.message },
+                });
+            }
+            return false;
+        }
     }
 }
 
