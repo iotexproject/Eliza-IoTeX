@@ -141,24 +141,12 @@ importers:
       '@elizaos/plugin-evm':
         specifier: workspace:*
         version: link:../packages/plugin-evm
-      '@elizaos/plugin-icp':
-        specifier: workspace:*
-        version: link:../packages/plugin-icp
       '@elizaos/plugin-image-generation':
         specifier: workspace:*
         version: link:../packages/plugin-image-generation
-      '@elizaos/plugin-intiface':
-        specifier: workspace:*
-        version: link:../packages/plugin-intiface
       '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../packages/plugin-node
-      '@elizaos/plugin-starknet':
-        specifier: workspace:*
-        version: link:../packages/plugin-starknet
-      '@elizaos/plugin-story':
-        specifier: workspace:*
-        version: link:../packages/plugin-story
       '@elizaos/plugin-tee':
         specifier: workspace:*
         version: link:../packages/plugin-tee

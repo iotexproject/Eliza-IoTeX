@@ -26,8 +26,6 @@ import {
 import { RedisClient } from "@elizaos/adapter-redis";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import { DirectClient } from "@elizaos/client-direct";
-import { evmPlugin } from "@elizaos/plugin-evm";
-import { storyPlugin } from "@elizaos/plugin-story";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { TEEMode } from "@elizaos/plugin-tee";
@@ -310,6 +308,7 @@ function initializeDatabase(dataDir: string) {
         const db = new PostgresDatabaseAdapter({
             connectionString: process.env.POSTGRES_URL,
             parseInputs: true,
+            max: 50
         });
 
         // Test the connection
@@ -470,11 +469,8 @@ export async function createAgent(
         plugins: [
             bootstrapPlugin,
             nodePlugin,
-            webSearchPlugin,
-            getSecret(character, "EVM_PUBLIC_KEY") ||
-            (getSecret(character, "WALLET_PUBLIC_KEY") &&
-                getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
-                ? evmPlugin
+            getSecret(character, "TAVILY_API_KEY")
+                ? webSearchPlugin
                 : null,
             getSecret(character, "FAL_API_KEY") ||
             getSecret(character, "OPENAI_API_KEY") ||
@@ -482,7 +478,6 @@ export async function createAgent(
             getSecret(character, "HEURIST_API_KEY")
                 ? imageGenerationPlugin
                 : null,
-            getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
