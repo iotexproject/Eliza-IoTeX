@@ -83,14 +83,14 @@ export class DiscordClient extends EventEmitter {
         // When joining to a new server
         this.client.on("guildCreate", this.handleGuildCreate.bind(this));
 
-        this.client.on(
-            Events.MessageReactionAdd,
-            this.handleReactionAdd.bind(this)
-        );
-        this.client.on(
-            Events.MessageReactionRemove,
-            this.handleReactionRemove.bind(this)
-        );
+        // this.client.on(
+        //     Events.MessageReactionAdd,
+        //     this.handleReactionAdd.bind(this)
+        // );
+        // this.client.on(
+        //     Events.MessageReactionRemove,
+        //     this.handleReactionRemove.bind(this)
+        // );
 
         // Handle voice events with the voice manager
         this.client.on(
