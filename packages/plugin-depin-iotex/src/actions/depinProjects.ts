@@ -4,7 +4,20 @@ import { projectsTemplate } from "../template";
 
 export const depinProjects: Action = {
     name: "DEPIN_PROJECTS",
-    similes: ["DEPIN_TOKENS"],
+    similes: [
+        "DEPIN_TOKENS",
+        "DEPIN_DATA",
+        "DEPIN_STATS",
+        "DEPIN_ANALYTICS",
+        "PROJECT_TOKENS",
+        "PROJECT_STATS",
+        "PROJECT_DATA",
+        "TOKEN_PROJECTS",
+        "CHAIN_PROJECTS",
+        "BLOCKCHAIN_PROJECTS",
+        "PROJECT_ANALYTICS",
+        "PROJECT_DETAILS"
+    ],
     description: "Fetches and compares DePIN project token prices",
     validate: async (_runtime: IAgentRuntime) => {
         return true;
