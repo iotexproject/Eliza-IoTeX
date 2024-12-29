@@ -921,14 +921,12 @@ Text: ${attachment.text}
             ]);
 
             // Check the existing memories in the database
-            console.timeLog("existing-memories", rooms.filter((room) => room !== roomId));
             const recentInteractionsData =
             await this.messageManager.getMemoriesByRoomIds({
                 // filter out the current room id from rooms
                 roomIds: rooms.filter((room) => room !== roomId),
                 limit: 20
             });
-            console.timeLog("existing-memories", recentInteractionsData.length);
             return recentInteractionsData;
         };
 
