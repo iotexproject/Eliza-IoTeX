@@ -71,21 +71,17 @@ const buildTransferDetails = async (
     runtime: IAgentRuntime,
     wp: WalletProvider
 ): Promise<TransferParams> => {
+    const chains = Object.keys(wp.chains);
+    state.supportedChains = chains.map((item) => `"${item}"`).join("|");
+
     const context = composeContext({
         state,
         template: transferTemplate,
     });
 
-    const chains = Object.keys(wp.chains);
-
-    const contextWithChains = context.replace(
-        "SUPPORTED_CHAINS",
-        chains.map((item) => `"${item}"`).join("|")
-    );
-
     const transferDetails = (await generateObjectDeprecated({
         runtime,
-        context: contextWithChains,
+        context,
         modelClass: ModelClass.SMALL,
     })) as TransferParams;
 
@@ -108,11 +104,17 @@ export const transferAction: Action = {
     description: "Transfer tokens between addresses on the same chain",
     handler: async (
         runtime: IAgentRuntime,
-        _message: Memory,
+        message: Memory,
         state: State,
         _options: any,
         callback?: HandlerCallback
     ) => {
+        if (!state) {
+            state = (await runtime.composeState(message)) as State;
+        } else {
+            state = await runtime.updateRecentMessageState(state);
+        }
+
         console.log("Transfer action handler called");
         const walletProvider = initWalletProvider(runtime);
         const action = new TransferAction(walletProvider);
