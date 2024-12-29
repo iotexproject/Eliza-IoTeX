@@ -1,5 +1,6 @@
 import { ByteArray, formatEther, parseEther, type Hex } from "viem";
 import {
+    Action,
     composeContext,
     generateObjectDeprecated,
     HandlerCallback,
@@ -104,7 +105,7 @@ const buildTransferDetails = async (
     return transferDetails;
 };
 
-export const transferAction = {
+export const transferAction: Action = {
     name: "transfer",
     description: "Transfer tokens between addresses on the same chain",
     handler: async (
@@ -151,7 +152,6 @@ export const transferAction = {
             return false;
         }
     },
-    template: transferTemplate,
     validate: async (runtime: IAgentRuntime) => {
         const privateKey = runtime.getSetting("EVM_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
