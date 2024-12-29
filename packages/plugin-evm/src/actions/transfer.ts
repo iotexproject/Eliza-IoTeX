@@ -14,8 +14,6 @@ import { initWalletProvider, WalletProvider } from "../providers/wallet";
 import type { Transaction, TransferParams } from "../types";
 import { transferTemplate } from "../templates";
 
-export { transferTemplate };
-
 // Exported for tests
 export class TransferAction {
     constructor(private walletProvider: WalletProvider) {}
