@@ -1,7 +1,5 @@
-import { composeContext } from "@elizaos/core";
-import { generateText } from "@elizaos/core";
+import { composeContext, generateObjectArray } from "@elizaos/core";
 import { getGoals } from "@elizaos/core";
-import { parseJsonArrayFromText } from "@elizaos/core";
 import {
     IAgentRuntime,
     Memory,
@@ -55,13 +53,14 @@ async function handler(
     state: State | undefined,
     options: { [key: string]: unknown } = { onlyInProgress: true }
 ): Promise<Goal[]> {
-    // get goals
+    // Fetch existing goals
     let goalsData = await getGoals({
         runtime,
         roomId: message.roomId,
         onlyInProgress: options.onlyInProgress as boolean,
     });
 
+    // Compose state and context for generating new goals
     state = (await runtime.composeState(message)) as State;
     const context = composeContext({
         state,
@@ -69,66 +68,75 @@ async function handler(
     });
 
     // Request generateText from OpenAI to analyze conversation and suggest goal updates
-    const response = await generateText({
+    const updates = await generateObjectArray({
         runtime,
         context,
         modelClass: ModelClass.LARGE,
     });
 
-    // Parse the JSON response to extract goal updates
-    const updates = parseJsonArrayFromText(response);
-
-    // get goals
+    // Re-fetch goals to ensure database sync
     goalsData = await getGoals({
         runtime,
         roomId: message.roomId,
         onlyInProgress: true,
     });
 
-    // Apply the updates to the goals
-    const updatedGoals = goalsData
-        .map((goal: Goal) => {
-            const update = updates?.find((u) => u.id === goal.id);
-            if (update) {
-                const objectives = goal.objectives;
+    // Apply updates to existing goals and collect new goals
+    const updatedGoals = [];
+    const newGoals = [];
 
-                // for each objective in update.objectives, find the objective with the same description in 'objectives' and set the 'completed' value to the update.objectives value
-                if (update.objectives) {
-                    for (const objective of objectives) {
-                        const updatedObjective = update.objectives.find(
-                            (o: Objective) =>
-                                o.description === objective.description
-                        );
-                        if (updatedObjective) {
-                            objective.completed = updatedObjective.completed;
-                        }
+    for (const update of updates || []) {
+        const existingGoal = goalsData.find((goal: Goal) => goal.id === update.id);
+
+        if (existingGoal) {
+            // Update existing goal
+            const objectives = existingGoal.objectives;
+
+            if (update.objectives) {
+                for (const objective of objectives) {
+                    const updatedObjective = update.objectives.find(
+                        (o: Objective) => o.description === objective.description
+                    );
+                    if (updatedObjective) {
+                        objective.completed = updatedObjective.completed;
                     }
                 }
-
-                return {
-                    ...goal,
-                    ...update,
-                    objectives: [
-                        ...goal.objectives,
-                        ...(update?.objectives || []),
-                    ],
-                }; // Merging the update into the existing goal
-            } else {
-                console.warn("**** ID NOT FOUND");
             }
-            return null; // No update for this goal
-        })
-        .filter(Boolean);
 
-    // Update goals in the database
+            updatedGoals.push({
+                ...existingGoal,
+                ...update,
+                objectives: [
+                    ...existingGoal.objectives,
+                    ...(update.objectives || []),
+                ],
+            });
+        } else {
+            // Create new goal if not found in existing data
+            newGoals.push({
+                ...update,
+                userId: message.userId,
+                roomId: message.roomId, // Ensure new goals are associated with the correct room
+                createdAt: new Date().toISOString(), // Add creation timestamp
+            });
+        }
+    }
+
+    // Update existing goals in the database
     for (const goal of updatedGoals) {
         const id = goal.id;
-        // delete id from goal
-        if (goal.id) delete goal.id;
+        if (goal.id) delete goal.id; // Remove ID for the update payload
         await runtime.databaseAdapter.updateGoal({ ...goal, id });
     }
 
-    return updatedGoals; // Return updated goals for further processing or logging
+    // Create new goals in the database
+    for (const newGoal of newGoals) {
+        if (newGoal.id) delete newGoal.id;
+        await runtime.databaseAdapter.createGoal(newGoal);
+    }
+
+    // Return both updated and newly created goals
+    return [...updatedGoals, ...newGoals];
 }
 
 export const goalEvaluator: Evaluator = {
@@ -143,16 +151,7 @@ export const goalEvaluator: Evaluator = {
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
-        // Check if there are active goals that could potentially be updated
-        console.time("update-goal-evaluate")
-        const goals = await getGoals({
-            runtime,
-            count: 1,
-            onlyInProgress: true,
-            roomId: message.roomId,
-        });
-        console.timeEnd("update-goal-evaluate")
-        return goals.length > 0;
+        return true;
     },
     description:
         "Analyze the conversation and update the status of the goals based on the new information provided.",
