@@ -18,7 +18,7 @@ export const depinProjects: Action = {
         "PROJECT_ANALYTICS",
         "PROJECT_DETAILS"
     ],
-    description: "Fetches and compares DePIN project token prices",
+    description: "Analyzes DePINScan projects",
     validate: async (_runtime: IAgentRuntime) => {
         return true;
     },
