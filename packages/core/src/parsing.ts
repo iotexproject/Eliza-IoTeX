@@ -34,8 +34,8 @@ export const parseShouldRespondFromText = (
 
 export const booleanFooter = `Respond with a YES or a NO.`;
 
-export const parseBooleanFromText = (text: string) => {
-    const match = text.match(/^(YES|NO)$/i);
+export const parseBooleanFromText = (text: string): boolean | null => {
+    const match = text.match(/\b(YES|NO)\b/i);
     return match ? match[0].toUpperCase() === "YES" : null;
 };
 
