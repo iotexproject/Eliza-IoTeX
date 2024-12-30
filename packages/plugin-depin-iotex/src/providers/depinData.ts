@@ -34,7 +34,7 @@ export class DePINScanProvider {
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
         await this.cacheManager.set(path.join(this.cacheKey, key), data, {
-            expires: Date.now() + 5 * 60 * 1000,
+            expires: Date.now() + 15 * 60 * 1000, // 15 minutes
         });
     }
 
