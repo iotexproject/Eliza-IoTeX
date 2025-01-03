@@ -175,6 +175,8 @@ export class MessageManager {
                 error
             )
         );
+
+        this.initializeCommands();
     }
 
     private async _initializeTeamMemberUsernames(): Promise<void> {
@@ -1135,6 +1137,62 @@ export class MessageManager {
         } catch (error) {
             elizaLogger.error("❌ Error handling message:", error);
             elizaLogger.error("Error sending message:", error);
+        }
+    }
+
+    private initializeCommands(): void {
+        this.bot.command('start', (ctx: Context) => this.handleStartCommand(ctx));
+    }
+
+    private async handleStartCommand(ctx: Context): Promise<void> {
+        if (ctx.chat?.type !== 'private') {
+            return;
+        }
+
+        const startCommandPhotoId = "https://i.ibb.co/8NTkybQ/ggs2banner.jpg";
+
+        try {
+            await ctx.sendPhoto(startCommandPhotoId, {
+                caption:
+                    '\n👋 Welcome to GOAT Earn\n' +
+                    '\n' +
+                    '🎁 Unlock a variety of rewards here and stay tuned to the announcements for more surprise bonus opportunities\\. [@GoatEarnApp](https://t.me/Goat_Earn_Bot/earnapp)\n' +
+                    '\n' +
+                    '\n💰 Start Earning Rewards 👇\n',
+                parse_mode: "MarkdownV2",
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "🚀 Join Community 🐐🐐🐐",
+                                url: "https://t.me/GoatEarnApp"
+                            },
+                        ],
+                        [
+                            {
+                                text: "🎟️Daily Checkin",
+                                url: "https://t.me/Goat_Earn_Bot/earnapp?action=daily_checkin"
+                            },
+                            {
+                                text: "🔐Browse DePINScan",
+                                url: "https://depinscan.io/"
+                            },
+                        ],
+                        [
+                            {
+                                text: "🎉Trending Projects",
+                                url: "https://t.me/Goat_Earn_Bot/earnapp?action=invite"
+                            },
+                            {
+                                text: "📈Invite to Earn",
+                                url: "https://t.me/Goat_Earn_Bot/earnapp?action=invite"
+                            }
+                        ]
+                    ]
+                }
+            });
+        } catch (error) {
+            elizaLogger.error("Error handling start command:", error);
         }
     }
 }
