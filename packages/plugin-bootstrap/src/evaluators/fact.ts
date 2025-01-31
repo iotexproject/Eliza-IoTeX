@@ -43,13 +43,14 @@ Recent Messages:
 {{recentMessages}}
 
 Response should be a JSON object array inside a JSON markdown block. Correct response format:
-\`\`\`json
+<response>
 [
   {"claim": string, "type": enum<fact|opinion|status>, in_bio: boolean, already_known: boolean },
   {"claim": string, "type": enum<fact|opinion|status>, in_bio: boolean, already_known: boolean },
   ...
 ]
-\`\`\``;
+</response>
+`;
 
 async function handler(runtime: IAgentRuntime, message: Memory) {
     const state = await runtime.composeState(message);
@@ -64,7 +65,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     const facts = await generateObjectArray({
         runtime,
         context,
-        modelClass: ModelClass.LARGE,
+        modelClass: ModelClass.SMALL,
     });
 
     const factsManager = new MemoryManager({
@@ -119,11 +120,11 @@ export const factEvaluator: Evaluator = {
 
         message: Memory
     ): Promise<boolean> => {
-        console.time("get-facts-evaluate")
+        console.time("get-facts-evaluate");
         const messageCount = (await runtime.messageManager.countMemories(
             message.roomId
         )) as number;
-        console.timeEnd("get-facts-evaluate")
+        console.timeEnd("get-facts-evaluate");
 
         const reflectionCount = Math.ceil(runtime.getConversationLength() / 2);
 
@@ -195,13 +196,13 @@ Facts about the actors:
                 },
             ] as ActionExample[],
             outcome: `Claims:
-json\`\`\`
+<response>
 [
   { "claim": "Alex just completed a marathon in just under 4 hours.", "type": "fact", "in_bio": false, "already_known": false },
   { "claim": "Alex worked out 2 hours a day at the gym for a year.", "type": "fact", "in_bio": true, "already_known": false },
   { "claim": "Alex is really proud of himself.", "type": "opinion", "in_bio": false, "already_known": false }
 ]
-\`\`\`
+</response>
 `,
         },
         {
@@ -234,12 +235,12 @@ Eva studied Philosophy before switching to Computer Science`,
                 },
             ] as ActionExample[],
             outcome: `Claims:
-json\`\`\`
+<response>
 [
   { "claim": "Mike and Eva won the regional poker tournament last spring", "type": "fact", "in_bio": false, "already_known": true },
   { "claim": "Winning the regional poker tournament put the poker club on the map", "type": "opinion", "in_bio": false, "already_known": false }
 ]
-\`\`\``,
+</response>`,
         },
     ],
 };

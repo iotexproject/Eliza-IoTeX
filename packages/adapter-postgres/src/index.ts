@@ -1,7 +1,7 @@
 import { v4 } from "uuid";
 
 // Import the entire module as default
-import pg, { PoolConfig} from "pg";
+import pg, { PoolConfig } from "pg";
 type Pool = pg.Pool;
 
 import {
@@ -11,6 +11,7 @@ import {
     EmbeddingProvider,
     GoalStatus,
     Participant,
+    Prediction,
     RAGKnowledgeItem,
     elizaLogger,
     getEmbeddingConfig,
@@ -1781,6 +1782,50 @@ export class PostgresDatabaseAdapter
                 params.chunkIndex,
                 params.isShared,
             ]
+        );
+    }
+
+    async createPrediction(prediction: Prediction): Promise<void> {
+        await this.pool.query(
+            `INSERT INTO predictions (id, creator, statement, deadline, contract_address, status, smartcontract_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+                prediction.id,
+                prediction.creator,
+                prediction.statement,
+                prediction.deadline,
+                prediction.contract_address,
+                prediction.status,
+                prediction.smartcontract_id,
+            ]
+        );
+    }
+
+    async getPredictions(params: {
+        status: "OPEN" | "RESOLVED" | "CLOSED";
+    }): Promise<Prediction[]> {
+        const { rows } = await this.pool.query(
+            `SELECT * FROM predictions WHERE "status" = $1`,
+            [params.status]
+        );
+        return rows;
+    }
+
+    async getReadyActivePredictions(): Promise<Prediction[]> {
+        const currentTime = new Date();
+        const { rows } = await this.pool.query(
+            `SELECT * FROM predictions WHERE "status" = 'OPEN' AND "deadline" < $1`,
+            [currentTime]
+        );
+        return rows;
+    }
+
+    async resolvePrediction(
+        predictionId: string,
+        outcome: boolean
+    ): Promise<void> {
+        await this.pool.query(
+            `UPDATE predictions SET "status" = 'RESOLVED', "outcome" = $2 WHERE "id" = $1`,
+            [predictionId, outcome]
         );
     }
 }

@@ -31,6 +31,7 @@ import {
     parseJSONObjectFromText,
     parseShouldRespondFromText,
     parseActionResponseFromText,
+    parseTagContent,
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
@@ -546,26 +547,26 @@ export async function generateText({
                 break;
             }
 
-            case ModelProviderName.MISTRAL: {
-                const mistral = createMistral();
+            // case ModelProviderName.MISTRAL: {
+            //     const mistral = createMistral();
 
-                const { text: mistralResponse } = await aiGenerateText({
-                    model: mistral(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                });
+            //     const { text: mistralResponse } = await aiGenerateText({
+            //         model: mistral(model),
+            //         prompt: context,
+            //         system:
+            //             runtime.character.system ??
+            //             settings.SYSTEM_PROMPT ??
+            //             undefined,
+            //         temperature: temperature,
+            //         maxTokens: max_response_length,
+            //         frequencyPenalty: frequency_penalty,
+            //         presencePenalty: presence_penalty,
+            //     });
 
-                response = mistralResponse;
-                elizaLogger.debug("Received response from Mistral model.");
-                break;
-            }
+            //     response = mistralResponse;
+            //     elizaLogger.debug("Received response from Mistral model.");
+            //     break;
+            // }
 
             case ModelProviderName.ANTHROPIC: {
                 elizaLogger.debug(
@@ -1035,6 +1036,7 @@ export async function generateText({
             }
         }
 
+        elizaLogger.info("Response:", response);
         return response;
     } catch (error) {
         elizaLogger.error("Error in generateText:", error);
@@ -1066,7 +1068,9 @@ export async function generateShouldRespond({
     modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
     let retryDelay = 1000;
-    while (true) {
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+    while (retryCount < MAX_RETRIES) {
         try {
             elizaLogger.debug(
                 "Attempting to generate text with context:",
@@ -1078,8 +1082,9 @@ export async function generateShouldRespond({
                 modelClass,
             });
 
-            elizaLogger.debug("Received response from generateText:", response);
-            const parsedResponse = parseShouldRespondFromText(response.trim());
+            const extractedResponse = parseTagContent(response, "response");
+            const parsedResponse =
+                parseShouldRespondFromText(extractedResponse);
             if (parsedResponse) {
                 elizaLogger.debug("Parsed response:", parsedResponse);
                 return parsedResponse;
@@ -1101,7 +1106,10 @@ export async function generateShouldRespond({
         elizaLogger.log(`Retrying in ${retryDelay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error("generateShouldRespond failed after 5 retries");
 }
 
 /**
@@ -1149,12 +1157,15 @@ export async function generateTrueOrFalse({
     modelClass: ModelClass;
 }): Promise<boolean> {
     let retryDelay = 1000;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const stop = Array.from(
         new Set([...(modelSettings.stop || []), ["\n"]])
     ) as string[];
 
-    while (true) {
+    while (retryCount < MAX_RETRIES) {
         try {
             const response = await generateText({
                 stop,
@@ -1171,9 +1182,17 @@ export async function generateTrueOrFalse({
             elizaLogger.error("Error in generateTrueOrFalse:", error);
         }
 
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error(
+        "Failed to generate boolean response after maximum retries"
+    );
 }
 
 /**
@@ -1204,9 +1223,12 @@ export async function generateTextArray({
         elizaLogger.error("generateTextArray context is empty");
         return [];
     }
-    let retryDelay = 1000;
 
-    while (true) {
+    let retryDelay = 1000;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    while (retryCount < MAX_RETRIES) {
         try {
             const response = await generateText({
                 runtime,
@@ -1222,9 +1244,15 @@ export async function generateTextArray({
             elizaLogger.error("Error in generateTextArray:", error);
         }
 
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error("Failed to generate text array after maximum retries");
 }
 
 export async function generateObjectDeprecated({
@@ -1240,17 +1268,20 @@ export async function generateObjectDeprecated({
         elizaLogger.error("generateObjectDeprecated context is empty");
         return null;
     }
-    let retryDelay = 1000;
 
-    while (true) {
+    let retryDelay = 1000;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    while (retryCount < MAX_RETRIES) {
         try {
-            // this is slightly different than generateObjectArray, in that we parse object, not object array
             const response = await generateText({
                 runtime,
                 context,
                 modelClass,
             });
-            const parsedResponse = parseJSONObjectFromText(response);
+            const extractedResponse = parseTagContent(response, "response");
+            const parsedResponse = parseJSONObjectFromText(extractedResponse);
             if (parsedResponse) {
                 return parsedResponse;
             }
@@ -1258,9 +1289,15 @@ export async function generateObjectDeprecated({
             elizaLogger.error("Error in generateObject:", error);
         }
 
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error("Failed to generate object after maximum retries");
 }
 
 export async function generateObjectArray({
@@ -1276,9 +1313,12 @@ export async function generateObjectArray({
         elizaLogger.error("generateObjectArray context is empty");
         return [];
     }
-    let retryDelay = 1000;
 
-    while (true) {
+    let retryDelay = 1000;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    while (retryCount < MAX_RETRIES) {
         try {
             const response = await generateText({
                 runtime,
@@ -1286,7 +1326,8 @@ export async function generateObjectArray({
                 modelClass,
             });
 
-            const parsedResponse = parseJsonArrayFromText(response);
+            const extractedResponse = parseTagContent(response, "response");
+            const parsedResponse = parseJsonArrayFromText(extractedResponse);
             if (parsedResponse) {
                 return parsedResponse;
             }
@@ -1294,9 +1335,15 @@ export async function generateObjectArray({
             elizaLogger.error("Error in generateTextArray:", error);
         }
 
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error("Failed to generate object array after maximum retries");
 }
 
 /**
@@ -1325,8 +1372,12 @@ export async function generateMessageResponse({
 
     context = await trimTokens(context, max_context_length, runtime);
     elizaLogger.debug("Context:", context);
-    let retryLength = 1000; // exponential backoff
-    while (true) {
+
+    let retryDelay = 1000;
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    while (retryCount < MAX_RETRIES) {
         try {
             elizaLogger.log("Generating message response..");
 
@@ -1336,22 +1387,31 @@ export async function generateMessageResponse({
                 modelClass,
             });
 
-            // try parsing the response as JSON, if null then try again
-            const parsedContent = parseJSONObjectFromText(response) as Content;
-            if (!parsedContent) {
-                elizaLogger.debug("parsedContent is null, retrying");
-                continue;
-            }
+            const responseText = parseTagContent(response, "response");
 
-            return parsedContent;
+            // try parsing the response as JSON, if null then try again
+            const parsedContent = parseJSONObjectFromText(
+                responseText
+            ) as Content;
+            if (parsedContent) {
+                return parsedContent;
+            }
+            elizaLogger.debug("parsedContent is null, retrying");
         } catch (error) {
             elizaLogger.error("ERROR:", error);
-            // wait for 2 seconds
-            retryLength *= 2;
-            await new Promise((resolve) => setTimeout(resolve, retryLength));
-            elizaLogger.debug("Retrying...");
         }
+
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error(
+        "Failed to generate message response after maximum retries"
+    );
 }
 
 export const generateImage = async (
@@ -1947,8 +2007,8 @@ export async function handleProvider(
             });
         case ModelProviderName.GOOGLE:
             return await handleGoogle(options);
-        case ModelProviderName.MISTRAL:
-            return await handleMistral(options);
+        // case ModelProviderName.MISTRAL:
+        //     return await handleMistral(options);
         case ModelProviderName.REDPILL:
             return await handleRedPill(options);
         case ModelProviderName.OPENROUTER:
@@ -2109,30 +2169,30 @@ async function handleGoogle({
     });
 }
 
-/**
- * Handles object generation for Mistral models.
- *
- * @param {ProviderOptions} options - Options specific to Mistral.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleMistral({
-    model,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode,
-    modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const mistral = createMistral();
-    return await aiGenerateObject({
-        model: mistral(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
+// /**
+//  * Handles object generation for Mistral models.
+//  *
+//  * @param {ProviderOptions} options - Options specific to Mistral.
+//  * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+//  */
+// async function handleMistral({
+//     model,
+//     schema,
+//     schemaName,
+//     schemaDescription,
+//     mode,
+//     modelOptions,
+// }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+//     const mistral = createMistral();
+//     return await aiGenerateObject({
+//         model: mistral(model),
+//         schema,
+//         schemaName,
+//         schemaDescription,
+//         mode,
+//         ...modelOptions,
+//     });
+// }
 
 /**
  * Handles object generation for Redpill models.
@@ -2263,7 +2323,10 @@ export async function generateTweetActions({
     modelClass: ModelClass;
 }): Promise<ActionResponse | null> {
     let retryDelay = 1000;
-    while (true) {
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    while (retryCount < MAX_RETRIES) {
         try {
             const response = await generateText({
                 runtime,
@@ -2274,13 +2337,13 @@ export async function generateTweetActions({
                 "Received response from generateText for tweet actions:",
                 response
             );
-            const { actions } = parseActionResponseFromText(response.trim());
+            const parsedResponse = parseTagContent(response, "response");
+            const { actions } = parseActionResponseFromText(parsedResponse);
             if (actions) {
                 console.debug("Parsed tweet actions:", actions);
                 return actions;
-            } else {
-                elizaLogger.debug("generateTweetActions no valid response");
             }
+            elizaLogger.debug("generateTweetActions no valid response");
         } catch (error) {
             elizaLogger.error("Error in generateTweetActions:", error);
             if (
@@ -2292,8 +2355,13 @@ export async function generateTweetActions({
                 );
             }
         }
-        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+        elizaLogger.log(
+            `Retrying in ${retryDelay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`
+        );
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
+        retryCount++;
     }
+
+    throw new Error("Failed to generate tweet actions after maximum retries");
 }
