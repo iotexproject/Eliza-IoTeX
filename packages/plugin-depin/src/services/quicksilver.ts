@@ -7,7 +7,10 @@ import {
     Content,
     generateMessageResponse,
 } from "@elizaos/core";
-import axios from "axios";
+import { http, createWalletClient, walletActions } from "viem";
+import { iotex } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import { wrapFetchWithPayment } from "x402-fetch";
 
 import { quicksilverResponseTemplate } from "../template";
 
@@ -44,16 +47,39 @@ type ToolParams = {
     mapbox: { location: string };
 };
 
+const AGENT_PRIVATE_KEY = process.env.EVM_PRIVATE_KEY;
+const account = privateKeyToAccount(AGENT_PRIVATE_KEY as `0x${string}`);
+const transport = http(iotex.rpcUrls.default.http[0]);
+const walletClient = createWalletClient({
+    chain: iotex,
+    transport,
+    account,
+}).extend(walletActions);
+
 export async function askQuickSilver(content: string): Promise<string> {
     const url = process.env.QUICKSILVER_URL || "https://quicksilver.iotex.ai";
-    const response = await axios.post(url + "/ask", {
-        q: content,
-    });
+    const fetchWithPayment = wrapFetchWithPayment(fetch, walletClient);
 
-    if (response.data.data) {
-        return response.data.data;
-    } else {
-        throw new Error("Failed to fetch weather data");
+    try {
+        const response = await fetchWithPayment(`${url}/ask`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                q: content,
+            }),
+        });
+
+        const responseData = await response.json();
+
+        if (responseData.data) {
+            return responseData.data;
+        } else {
+            throw new Error("Failed to get response from Quicksilver");
+        }
+    } catch (error) {
+        throw new Error(`Quicksilver request failed: ${error.message}`);
     }
 }
 
@@ -70,12 +96,19 @@ export async function getRawDataFromQuicksilver<T extends QuicksilverTool>(
         });
     }
 
-    const response = await axios.get(`${url}/raw?${queryParams.toString()}`);
+    try {
+        const response = await fetch(`${url}/raw?${queryParams.toString()}`);
+        const responseData = await response.json();
 
-    if (response.data?.data) {
-        return response.data.data;
-    } else {
-        throw new Error(`Failed to fetch raw data for tool: ${tool}`);
+        if (responseData?.data) {
+            return responseData.data;
+        } else {
+            throw new Error(`Failed to fetch raw data for tool: ${tool}`);
+        }
+    } catch (error) {
+        throw new Error(
+            `Failed to fetch raw data for tool ${tool}: ${error.message}`
+        );
     }
 }
 
